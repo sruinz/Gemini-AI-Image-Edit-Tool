@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 이미지 편집툴</title>
+    <style>
+        /* 기본적인 페이지 스타일 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* 메인 컨테이너 */
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            gap: 30px;
+            grid-template-columns: 1fr 1fr;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* 폼 섹션 (왼쪽) */
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 결과 섹션 (오른쪽) */
+        .result-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            min-height: 300px;
+        }
+
+        /* 제목 스타일 */
+        .title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .title-group h1 {
+            font-size: 32px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .title-group h1 span {
+            font-size: 32px;
+            margin-right: 10px;
+        }
+
+        .title-group p {
+            font-size: 18px; /* 글자 크기 조정 */
+            margin: 0;
+            color: #555;
+        }
+        .title-group p a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+        .title-group p a:hover {
+            text-decoration: underline;
+        }
+
+        /* 입력 그룹 */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        a.api-link {
+            font-size: 14px;
+            color: #4285f4;
+            text-decoration: none;
+            margin-bottom: 5px;
+        }
+        a.api-link:hover {
+            text-decoration: underline;
+        }
+        
+        .model-info {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input[type="password"], textarea, select, button, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="password"]:focus, textarea:focus, select:focus {
+            border-color: #4285f4;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        /* 버튼 스타일 */
+        button {
+            background-color: #4285f4;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #357ae8;
+        }
+        
+        button:disabled {
+            background-color: #a0c4ff;
+            cursor: not-allowed;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .preset-buttons button {
+            padding: 10px;
+            font-size: 14px;
+            flex-grow: 1;
+        }
+        
+        /* 결과 이미지 */
+        #result-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+            cursor: pointer;
+        }
+        
+        #status-text {
+            word-break: keep-all; /* 단어가 잘리지 않게 줄바꿈 */
+        }
+
+        /* 로딩 스피너 */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4285f4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 모달 팝업 스타일 */
+        .modal {
+            display: none; /* 기본적으로 숨김 */
+            position: fixed; /* 화면에 고정 */
+            z-index: 1000; /* 다른 요소 위에 표시 */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* 내용이 넘칠 경우 스크롤 */
+            background-color: rgba(0, 0, 0, 0.9); /* 어두운 배경 */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* 썸네일 스타일 */
+        .thumbnail-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .thumbnail {
+            width: 80px; /* 썸네일 크기 */
+            height: 80px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="form-section">
+        <div class="title-group">
+            <h1>✨ AI 이미지 편집툴</h1>
+            <p><a href="https://svrforum.com/software/2668829" target="_blank" class="full-link">서버포럼 - 빨간물약</a></p>
+        </div>
+
+        <div class="input-group">
+            <a href="https://aistudio.google.com/apikey" target="_blank" class="api-link">API 키 발급 및 현황 확인 (aistudio.google.com/apikey)</a>
+            <label for="apiKey">API Key (Google Generative AI)</label>
+            <input type="password" id="apiKey" placeholder="Enter your API key" required>
+        </div>
+
+        <div class="input-group">
+            <label>사용 모델</label>
+            <div class="model-info">
+                **Gemini 2.5 Flash** (유료 티어1 API 필요)
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="imageUpload">이미지 업로드 1 (선택사항)</label>
+            <input type="file" id="imageUpload" accept="image/*">
+            <small>첫 번째 이미지 업로드</small>
+            <div id="thumbnailContainer1" class="thumbnail-container"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="imageUpload2">이미지 업로드 2 (선택사항)</label>
+            <input type="file" id="imageUpload2" accept="image/*">
+            <small>두 번째 이미지 업로드 (이미지 합성 등에 사용)</small>
+            <div id="thumbnailContainer2" class="thumbnail-container"></div>
+        </div>
+        
+        <div class="input-group">
+            <label for="promptText">프롬프트</label>
+            <textarea id="promptText" placeholder="변환하고 싶은 내용을 입력하세요. 예: '이 이미지를 수채화 그림처럼 바꿔줘.' 또는 '두 인물을 하나의 이미지에 함께 배치해줘.'"></textarea>
+        </div>
+        
+        <div class="input-group">
+            <label for="promptPreset">프롬프트 프리셋</label>
+            <select id="promptPreset"></select>
+            <div class="preset-buttons">
+                <button id="savePresetBtn">프리셋 저장</button>
+                <button id="deletePresetBtn">프리셋 삭제</button>
+            </div>
+        </div>
+        
+        <button id="transformButton">생성</button>
+    </div>
+    
+    <div class="result-section">
+        <p id="status-text">이미지를 업로드하고 생성 버튼을 누르세요.</p>
+        <div class="loader" id="loader"></div>
+        <img id="result-image" src="" alt="변환된 이미지">
+        <button id="downloadButton" style="display:none; margin-top: 10px;">다운로드</button>
+    </div>
+</div>
+
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="img01">
+</div>
+
+
+<script>
+    const apiKeyInput = document.getElementById('apiKey');
+    const imageUploadInput = document.getElementById('imageUpload');
+    const imageUploadInput2 = document.getElementById('imageUpload2');
+    const promptTextInput = document.getElementById('promptText');
+    const promptPresetSelect = document.getElementById('promptPreset');
+    const savePresetBtn = document.getElementById('savePresetBtn');
+    const deletePresetBtn = document.getElementById('deletePresetBtn');
+    const transformButton = document.getElementById('transformButton');
+    const statusText = document.getElementById('status-text');
+    const loader = document.getElementById('loader');
+    const resultImage = document.getElementById('result-image');
+    const downloadButton = document.getElementById('downloadButton');
+
+    const thumbnailContainer1 = document.getElementById('thumbnailContainer1');
+    const thumbnailContainer2 = document.getElementById('thumbnailContainer2');
+
+    // 모달 관련 요소
+    const imageModal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('img01');
+    const closeModal = document.getElementsByClassName('close')[0];
+
+    // API 키 저장 및 로드
+    const apiKeyKey = 'geminiApiKey';
+    if (localStorage.getItem(apiKeyKey)) {
+        apiKeyInput.value = localStorage.getItem(apiKeyKey);
+    }
+    apiKeyInput.addEventListener('input', () => {
+        localStorage.setItem(apiKeyKey, apiKeyInput.value);
+    });
+
+    // 프리셋 관리
+    const presetsKey = 'geminiPresets';
+    function loadPresets() {
+        const storedPresets = localStorage.getItem(presetsKey);
+        return storedPresets ? JSON.parse(storedPresets) : {};
+    }
+    function savePresets(presets) {
+        localStorage.setItem(presetsKey, JSON.stringify(presets));
+        populatePresetDropdown();
+    }
+    function populatePresetDropdown() {
+        const presets = loadPresets();
+        promptPresetSelect.innerHTML = '<option value="">-- 프리셋 선택 --</option>';
+        for (const name in presets) {
+            const option = document.createElement('option');
+            option.value = presets[name];
+            option.textContent = name;
+            promptPresetSelect.appendChild(option);
+        }
+    }
+    populatePresetDropdown();
+    promptPresetSelect.addEventListener('change', (event) => {
+        promptTextInput.value = event.target.value;
+    });
+    savePresetBtn.addEventListener('click', () => {
+        const presetName = prompt('저장할 프리셋의 이름을 입력하세요:');
+        if (presetName && promptTextInput.value) {
+            const presets = loadPresets();
+            presets[presetName] = promptTextInput.value;
+            savePresets(presets);
+        } else {
+            alert('프리셋 이름과 프롬프트를 모두 입력해주세요.');
+        }
+    });
+    deletePresetBtn.addEventListener('click', () => {
+        const selectedOption = promptPresetSelect.options[promptPresetSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            if (confirm(`'${selectedOption.textContent}' 프리셋을 삭제하시겠습니까?`)) {
+                const presets = loadPresets();
+                delete presets[selectedOption.textContent];
+                savePresets(presets);
+                promptTextInput.value = '';
+            }
+        } else {
+            alert('삭제할 프리셋을 선택해주세요.');
+        }
+    });
+    
+    // 다운로드 버튼 클릭 이벤트
+    downloadButton.addEventListener('click', () => {
+        const imageData = resultImage.src;
+        if (imageData && imageData.startsWith('data:image')) {
+            const a = document.createElement('a');
+            a.href = imageData;
+            a.download = `gemini-image-${new Date().getTime()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            alert('다운로드할 이미지가 없습니다.');
+        }
+    });
+    
+    // 결과 이미지 클릭 시 모달 팝업으로 확대
+    resultImage.addEventListener('click', () => {
+        if (resultImage.src && resultImage.src.startsWith('data:image')) {
+            imageModal.style.display = 'flex'; // flex로 변경하여 중앙 정렬
+            modalImg.src = resultImage.src;
+        } else {
+            // alert('표시할 이미지가 없습니다. 먼저 이미지를 생성해 주세요.');
+        }
+    });
+
+    // 모달 닫기 버튼 클릭
+    closeModal.addEventListener('click', () => {
+        imageModal.style.display = 'none';
+    });
+
+    // 모달 배경 클릭 시 닫기
+    imageModal.addEventListener('click', (event) => {
+        if (event.target === imageModal) {
+            imageModal.style.display = 'none';
+        }
+    });
+
+    // 썸네일 생성 및 표시 함수
+    function displayThumbnail(file, container) {
+        container.innerHTML = ''; // 기존 썸네일 제거
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.classList.add('thumbnail');
+                img.alt = file.name;
+                img.addEventListener('click', () => {
+                    imageModal.style.display = 'flex';
+                    modalImg.src = e.target.result;
+                });
+                container.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // 이미지 업로드 1 변경 이벤트
+    imageUploadInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        displayThumbnail(file, thumbnailContainer1);
+    });
+
+    // 이미지 업로드 2 변경 이벤트
+    imageUploadInput2.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        displayThumbnail(file, thumbnailContainer2);
+    });
+
+    // 변환 버튼 클릭 이벤트 핸들러
+    transformButton.addEventListener('click', async () => {
+        const apiKey = apiKeyInput.value.trim();
+        const prompt = promptTextInput.value.trim();
+        const imageFile1 = imageUploadInput.files[0];
+        const imageFile2 = imageUploadInput2.files[0];
+
+        // 유효성 검사
+        if (!apiKey) {
+            alert('API 키를 입력해주세요.');
+            return;
+        }
+        if (!prompt) {
+            alert('프롬프트를 입력해주세요.');
+            return;
+        }
+
+        // UI 상태 변경
+        transformButton.disabled = true;
+        statusText.style.display = 'none';
+        resultImage.style.display = 'none';
+        downloadButton.style.display = 'none';
+        loader.style.display = 'block';
+
+        const parts = [{ text: prompt }];
+
+        if (imageFile1) {
+            const base64Image = await convertFileToBase64(imageFile1);
+            parts.push({
+                inlineData: {
+                    mimeType: imageFile1.type,
+                    data: base64Image
+                }
+            });
+        }
+
+        if (imageFile2) {
+            const base64Image = await convertFileToBase64(imageFile2);
+            parts.push({
+                inlineData: {
+                    mimeType: imageFile2.type,
+                    data: base64Image
+                }
+            });
+        }
+        
+        // 아무 이미지도 업로드되지 않았을 경우 더미 이미지 추가
+        if (parts.length === 1) {
+            const dummyCanvas = document.createElement('canvas');
+            dummyCanvas.width = 1;
+            dummyCanvas.height = 1;
+            const ctx = dummyCanvas.getContext('2d');
+            ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+            ctx.fillRect(0, 0, 1, 1);
+            const dataUrl = dummyCanvas.toDataURL('image/png');
+            const blob = await (await fetch(dataUrl)).blob();
+            const dummyFile = new File([blob], 'dummy_image.png', { type: 'image/png' });
+
+            const dummyBase64 = await convertFileToBase64(dummyFile);
+            parts.push({
+                inlineData: {
+                    mimeType: dummyFile.type,
+                    data: dummyBase64
+                }
+            });
+        }
+        
+        try {
+            const result = await generateContent(apiKey, parts);
+            
+            resultImage.src = result;
+            resultImage.style.display = 'block';
+            statusText.textContent = '이미지 생성 성공!';
+            statusText.style.display = 'block';
+            downloadButton.style.display = 'block';
+            
+        } catch (error) {
+            console.error('API Error:', error);
+            let errorMessage = error.message;
+            if (errorMessage.includes('API 응답에서 변환된 이미지를 찾을 수 없습니다.')) {
+                errorMessage = "API 응답에서 이미지를 찾을 수 없습니다. 프롬프트를 변경하여 다시 시도해 보세요.";
+            }
+            statusText.textContent = `오류 발생: ${errorMessage}`;
+            statusText.style.display = 'block';
+        } finally {
+            transformButton.disabled = false;
+            loader.style.display = 'none';
+        }
+    });
+
+    function convertFileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function generateContent(apiKey, parts) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+        
+        const requestBody = {
+            contents: [{ parts: parts }]
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error.message || 'API 호출에 실패했습니다.');
+        }
+
+        const responseData = await response.json();
+        
+        const imageContent = responseData.candidates[0].content.parts.find(part => part.inlineData && part.inlineData.mimeType.startsWith('image'));
+        
+        if (imageContent) {
+            return `data:${imageContent.inlineData.mimeType};base64,${imageContent.inlineData.data}`;
+        } else {
+            throw new Error('API 응답에서 변환된 이미지를 찾을 수 없습니다.');
+        }
+    }
+</script>
+
+</body>
+</html>
