@@ -72,7 +72,7 @@
         }
 
         .title-group p {
-            font-size: 18px; /* 글자 크기 조정 */
+            font-size: 18px;
             margin: 0;
             color: #555;
         }
@@ -176,7 +176,7 @@
         }
         
         #status-text {
-            word-break: keep-all; /* 단어가 잘리지 않게 줄바꿈 */
+            word-break: keep-all;
         }
 
         /* 로딩 스피너 */
@@ -197,15 +197,15 @@
 
         /* 모달 팝업 스타일 */
         .modal {
-            display: none; /* 기본적으로 숨김 */
-            position: fixed; /* 화면에 고정 */
-            z-index: 1000; /* 다른 요소 위에 표시 */
+            display: none;
+            position: fixed;
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto; /* 내용이 넘칠 경우 스크롤 */
-            background-color: rgba(0, 0, 0, 0.9); /* 어두운 배경 */
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
             justify-content: center;
             align-items: center;
         }
@@ -246,7 +246,7 @@
         }
 
         .thumbnail {
-            width: 80px; /* 썸네일 크기 */
+            width: 80px;
             height: 80px;
             object-fit: cover;
             border: 1px solid #ddd;
@@ -432,7 +432,7 @@
     // 결과 이미지 클릭 시 모달 팝업으로 확대
     resultImage.addEventListener('click', () => {
         if (resultImage.src && resultImage.src.startsWith('data:image')) {
-            imageModal.style.display = 'flex'; // flex로 변경하여 중앙 정렬
+            imageModal.style.display = 'flex';
             modalImg.src = resultImage.src;
         } else {
             // alert('표시할 이미지가 없습니다. 먼저 이미지를 생성해 주세요.');
@@ -453,7 +453,7 @@
 
     // 썸네일 생성 및 표시 함수
     function displayThumbnail(file, container) {
-        container.innerHTML = ''; // 기존 썸네일 제거
+        container.innerHTML = '';
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -490,7 +490,6 @@
         const imageFile1 = imageUploadInput.files[0];
         const imageFile2 = imageUploadInput2.files[0];
 
-        // 유효성 검사
         if (!apiKey) {
             alert('API 키를 입력해주세요.');
             return;
@@ -500,7 +499,6 @@
             return;
         }
 
-        // UI 상태 변경
         transformButton.disabled = true;
         statusText.style.display = 'none';
         resultImage.style.display = 'none';
@@ -529,7 +527,6 @@
             });
         }
         
-        // 아무 이미지도 업로드되지 않았을 경우 더미 이미지 추가
         if (parts.length === 1) {
             const dummyCanvas = document.createElement('canvas');
             dummyCanvas.width = 1;
@@ -561,12 +558,11 @@
             
         } catch (error) {
             console.error('API Error:', error);
-            let errorMessage = error.message;
-            if (errorMessage.includes('API 응답에서 변환된 이미지를 찾을 수 없습니다.')) {
-                errorMessage = "API 응답에서 이미지를 찾을 수 없습니다. 프롬프트를 변경하여 다시 시도해 보세요.";
-            }
-            statusText.textContent = `오류 발생: ${errorMessage}`;
+            
+            // 모든 오류를 포괄하여 사용자 친화적인 메시지를 표시
+            statusText.textContent = "이미지 생성에 실패했습니다. 프롬프트나 이미지를 변경하여 다시 시도해 보세요.";
             statusText.style.display = 'block';
+
         } finally {
             transformButton.disabled = false;
             loader.style.display = 'none';
@@ -604,6 +600,11 @@
 
         const responseData = await response.json();
         
+        // 응답이 유효하지 않은 경우 명확한 오류 발생
+        if (!responseData || !responseData.candidates || responseData.candidates.length === 0) {
+            throw new Error('API 응답에서 유효한 콘텐츠를 찾을 수 없습니다. 안전 정책에 위배되었을 수 있습니다.');
+        }
+
         const imageContent = responseData.candidates[0].content.parts.find(part => part.inlineData && part.inlineData.mimeType.startsWith('image'));
         
         if (imageContent) {
