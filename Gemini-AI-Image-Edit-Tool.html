@@ -72,7 +72,7 @@
         }
 
         .title-group p {
-            font-size: 18px;
+            font-size: 18px; /* 글자 크기 조정 */
             margin: 0;
             color: #555;
         }
@@ -176,7 +176,7 @@
         }
         
         #status-text {
-            word-break: keep-all;
+            word-break: keep-all; /* 단어가 잘리지 않게 줄바꿈 */
         }
 
         /* 로딩 스피너 */
@@ -197,15 +197,15 @@
 
         /* 모달 팝업 스타일 */
         .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
+            display: none; /* 기본적으로 숨김 */
+            position: fixed; /* 화면에 고정 */
+            z-index: 1000; /* 다른 요소 위에 표시 */
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.9);
+            overflow: auto; /* 내용이 넘칠 경우 스크롤 */
+            background-color: rgba(0, 0, 0, 0.9); /* 어두운 배경 */
             justify-content: center;
             align-items: center;
         }
@@ -246,7 +246,7 @@
         }
 
         .thumbnail {
-            width: 80px;
+            width: 80px; /* 썸네일 크기 */
             height: 80px;
             object-fit: cover;
             border: 1px solid #ddd;
@@ -257,6 +257,39 @@
 
         .thumbnail:hover {
             transform: scale(1.05);
+        }
+        
+        /* 토글 스위치 스타일 */
+        .toggle-switch-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 28px;
+            border-radius: 14px;
+            background-color: #ccc;
+            transition: background-color 0.3s;
+        }
+        .toggle-switch.checked {
+            background-color: #4285f4;
+        }
+        .toggle-switch-handle {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: white;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.checked .toggle-switch-handle {
+            transform: translateX(20px);
         }
 
         /* 반응형 디자인 */
@@ -316,6 +349,17 @@
                 <button id="savePresetBtn">프리셋 저장</button>
                 <button id="deletePresetBtn">프리셋 삭제</button>
             </div>
+        </div>
+
+        <div class="input-group">
+            <label>연속 편집 모드</label>
+            <div class="toggle-switch-container" id="continuousModeToggle">
+                <div class="toggle-switch">
+                    <div class="toggle-switch-handle"></div>
+                </div>
+                <span>OFF</span>
+            </div>
+            <small>생성된 이미지를 다음 작업의 첫 번째 이미지로 자동 설정합니다.</small>
         </div>
         
         <button id="transformButton">생성</button>
@@ -432,7 +476,7 @@
     // 결과 이미지 클릭 시 모달 팝업으로 확대
     resultImage.addEventListener('click', () => {
         if (resultImage.src && resultImage.src.startsWith('data:image')) {
-            imageModal.style.display = 'flex';
+            imageModal.style.display = 'flex'; // flex로 변경하여 중앙 정렬
             modalImg.src = resultImage.src;
         } else {
             // alert('표시할 이미지가 없습니다. 먼저 이미지를 생성해 주세요.');
@@ -453,7 +497,7 @@
 
     // 썸네일 생성 및 표시 함수
     function displayThumbnail(file, container) {
-        container.innerHTML = '';
+        container.innerHTML = ''; // 기존 썸네일 제거
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -482,6 +526,31 @@
         const file = event.target.files[0];
         displayThumbnail(file, thumbnailContainer2);
     });
+    
+    // --- 연속 편집 모드 로직 시작 ---
+    const continuousModeToggle = document.getElementById('continuousModeToggle');
+    const continuousModeText = continuousModeToggle.querySelector('span');
+    let continuousMode = false;
+
+    continuousModeToggle.addEventListener('click', () => {
+        continuousMode = !continuousMode;
+        continuousModeToggle.querySelector('.toggle-switch').classList.toggle('checked', continuousMode);
+        continuousModeText.textContent = continuousMode ? 'ON' : 'OFF';
+    });
+
+    // Data URL을 File 객체로 변환하는 함수
+    function dataURLtoFile(dataurl, filename) {
+        const arr = dataurl.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    }
+    // --- 연속 편집 모드 로직 끝 ---
 
     // 변환 버튼 클릭 이벤트 핸들러
     transformButton.addEventListener('click', async () => {
@@ -490,6 +559,7 @@
         const imageFile1 = imageUploadInput.files[0];
         const imageFile2 = imageUploadInput2.files[0];
 
+        // 유효성 검사
         if (!apiKey) {
             alert('API 키를 입력해주세요.');
             return;
@@ -499,6 +569,7 @@
             return;
         }
 
+        // UI 상태 변경
         transformButton.disabled = true;
         statusText.style.display = 'none';
         resultImage.style.display = 'none';
@@ -527,6 +598,7 @@
             });
         }
         
+        // 아무 이미지도 업로드되지 않았을 경우 더미 이미지 추가
         if (parts.length === 1) {
             const dummyCanvas = document.createElement('canvas');
             dummyCanvas.width = 1;
@@ -555,14 +627,28 @@
             statusText.textContent = '이미지 생성 성공!';
             statusText.style.display = 'block';
             downloadButton.style.display = 'block';
+
+            // --- 연속 편집 모드 로직 실행 ---
+            if (continuousMode) {
+                const newFile = dataURLtoFile(result, `edited_image_${new Date().getTime()}.png`);
+                
+                // 새로운 File 객체를 DataTransfer 객체에 담아 input.files에 할당
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(newFile);
+                imageUploadInput.files = dataTransfer.files;
+
+                // 썸네일 업데이트
+                displayThumbnail(newFile, thumbnailContainer1);
+            }
             
         } catch (error) {
             console.error('API Error:', error);
-            
-            // 모든 오류를 포괄하여 사용자 친화적인 메시지를 표시
-            statusText.textContent = "이미지 생성에 실패했습니다.<br>프롬프트나 이미지를 변경하여 다시 시도해 보세요.";
+            let errorMessage = error.message;
+            if (errorMessage.includes('API 응답에서 변환된 이미지를 찾을 수 없습니다.')) {
+                errorMessage = "API 응답에서 이미지를 찾을 수 없습니다. 프롬프트를 변경하여 다시 시도해 보세요.";
+            }
+            statusText.textContent = `오류 발생: ${errorMessage}`;
             statusText.style.display = 'block';
-
         } finally {
             transformButton.disabled = false;
             loader.style.display = 'none';
@@ -600,11 +686,6 @@
 
         const responseData = await response.json();
         
-        // 응답이 유효하지 않은 경우 명확한 오류 발생
-        if (!responseData || !responseData.candidates || responseData.candidates.length === 0) {
-            throw new Error('API 응답에서 유효한 콘텐츠를 찾을 수 없습니다. 안전 정책에 위배되었을 수 있습니다.');
-        }
-
         const imageContent = responseData.candidates[0].content.parts.find(part => part.inlineData && part.inlineData.mimeType.startsWith('image'));
         
         if (imageContent) {
