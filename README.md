@@ -1,11 +1,11 @@
 # Gemini-AI-Image-Edit-Tool
 제미나이 2.5 Flash 프리뷰 이미지 생성 모델을 이용한 이미지 편집 도구입니다
 
-<img width="1164" height="1474" alt="image" src="https://github.com/user-attachments/assets/74178196-6a90-4981-af3a-515b9fcfde50" />
-<img width="1142" height="1473" alt="image" src="https://github.com/user-attachments/assets/a6911690-0647-4cb2-9288-4f3dcfe8e8c9" />
-<img width="1146" height="1495" alt="image" src="https://github.com/user-attachments/assets/29a6d0af-d21e-4b66-a04c-7317e53f3adb" />
-<img width="1125" height="1597" alt="image" src="https://github.com/user-attachments/assets/1b52a03d-e9f2-4667-a6f2-5421074cb514" />
-<img width="1858" height="862" alt="image" src="https://github.com/user-attachments/assets/0ac01f0d-1afa-447c-9e1a-7488343e817b" />
+<img width="1143" height="1339" alt="image" src="https://github.com/user-attachments/assets/4b76fbfc-0d6a-467b-bcfc-dd52de743e17" />
+<img width="1143" height="1339" alt="image" src="https://github.com/user-attachments/assets/300e5856-6fbb-442b-b939-d10baaf76845" />
+<img width="1143" height="1431" alt="image" src="https://github.com/user-attachments/assets/0c679b61-c6db-45c2-8fe3-d74968d6711f" />
+<img width="1143" height="1523" alt="image" src="https://github.com/user-attachments/assets/4ebd20aa-ba71-4c3f-a2fc-aa18a2e15339" />
+<img width="1239" height="842" alt="image" src="https://github.com/user-attachments/assets/1de3f993-9e61-4608-a0d7-399206e81bb0" />
 
 
 제미나이 2.5 Flash 프리뷰 이미지 생성 모델 API를 통해 이미지를 생성 편집 합성 가능한 도구입니다
