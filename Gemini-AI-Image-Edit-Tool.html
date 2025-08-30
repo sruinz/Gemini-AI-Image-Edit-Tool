@@ -74,7 +74,7 @@
         }
 
         .title-group p {
-            font-size: 18px; /* 글자 크기 조정 */
+            font-size: 18px;
             margin: 0;
             color: #555;
         }
@@ -169,7 +169,7 @@
             flex-grow: 1;
         }
         #deletePresetBtn {
-            background-color: #dc3545; /* 삭제 버튼은 빨간색으로 */
+            background-color: #dc3545;
         }
         #deletePresetBtn:hover {
             background-color: #c82333;
@@ -186,7 +186,7 @@
         }
         
         #status-text {
-            word-break: keep-all; /* 단어가 잘리지 않게 줄바꿈 */
+            word-break: keep-all;
         }
 
         /* 로딩 스피너 */
@@ -207,15 +207,15 @@
 
         /* 모달 팝업 스타일 */
         .modal {
-            display: none; /* 기본적으로 숨김 */
-            position: fixed; /* 화면에 고정 */
-            z-index: 1000; /* 다른 요소 위에 표시 */
+            display: none;
+            position: fixed;
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto; /* 내용이 넘칠 경우 스크롤 */
-            background-color: rgba(0, 0, 0, 0.9); /* 어두운 배경 */
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
             justify-content: center;
             align-items: center;
         }
@@ -379,18 +379,44 @@
         body.dark-mode button#transformButton:not(:disabled):hover {
             background-color: #5aa1f2;
         }
+        
+        /* ▼ 다크 모드 토글 버튼 (수정됨) ▼ */
+        #darkModeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001; /* 다른 콘텐츠 위에 오도록 */
+            
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            font-size: 20px;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            border-radius: 50%; /* 원형 버튼 */
+            background-color: #ffffff;
+            color: #333;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s, transform 0.2s;
+        }
+        #darkModeToggle:hover {
+            transform: scale(1.1);
+        }
         body.dark-mode #darkModeToggle {
             background-color: #333;
             color: #fff;
             border: 1px solid #555;
-            padding: 8px 12px;
-            font-size: 14px;
-            align-self: flex-start;
         }
         /* --- ▲ 다크 모드 스타일 ▲ --- */
     </style>
 </head>
 <body>
+
+<button id="darkModeToggle">🌙</button>
 
 <div class="container">
     <div class="form-section">
@@ -398,8 +424,6 @@
             <h1>✨ AI 이미지 편집 도구</h1>
             <p><a href="https://svrforum.com/software/2668829" target="_blank" class="full-link">서버포럼 - 빨간물약</a></p>
         </div>
-
-        <button id="darkModeToggle" style="margin-bottom: 10px; padding: 10px; font-size: 14px;">🌙 다크 모드</button>
 
         <div class="input-group">
             <a href="https://aistudio.google.com/apikey" target="_blank" class="api-link">API 키 발급 및 현황 확인 (aistudio.google.com/apikey)</a>
@@ -489,21 +513,21 @@
     const imageModal = document.getElementById('imageModal');
     const modalImg = document.getElementById('img01');
     const closeModal = document.getElementsByClassName('close')[0];
-    const darkModeToggle = document.getElementById('darkModeToggle'); // 다크 모드 버튼
+    const darkModeToggle = document.getElementById('darkModeToggle');
 
     // --- 전역 변수 ---
     let currentImageFile1 = null; 
     let currentImageFile2 = null;
 
-    // --- ▼ 다크 모드 로직 ▼ ---
+    // --- ▼ 다크 모드 로직 (수정됨) ▼ ---
     const setDarkMode = (isDark) => {
         if (isDark) {
             document.body.classList.add('dark-mode');
-            darkModeToggle.textContent = '☀️ 라이트 모드';
+            darkModeToggle.textContent = '☀️'; // 아이콘만 표시
             localStorage.setItem('darkMode', 'enabled');
         } else {
             document.body.classList.remove('dark-mode');
-            darkModeToggle.textContent = '🌙 다크 모드';
+            darkModeToggle.textContent = '🌙'; // 아이콘만 표시
             localStorage.setItem('darkMode', 'disabled');
         }
     };
@@ -511,7 +535,6 @@
         const isDarkMode = document.body.classList.contains('dark-mode');
         setDarkMode(!isDarkMode);
     });
-    // 페이지 로드 시 다크 모드 설정 확인
     document.addEventListener('DOMContentLoaded', () => {
         if (localStorage.getItem('darkMode') === 'enabled') {
             setDarkMode(true);
