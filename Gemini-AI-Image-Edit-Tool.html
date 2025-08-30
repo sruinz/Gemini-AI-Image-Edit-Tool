@@ -16,6 +16,7 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         /* 메인 컨테이너 */
@@ -50,6 +51,7 @@
             border-radius: 10px;
             text-align: center;
             min-height: 300px;
+            transition: border-color 0.3s;
         }
 
         /* 제목 스타일 */
@@ -94,6 +96,7 @@
         label {
             font-weight: 600;
             color: #555;
+            transition: color 0.3s;
         }
         
         a.api-link {
@@ -111,6 +114,7 @@
             padding: 10px;
             border-radius: 8px;
             font-size: 14px;
+            transition: background-color 0.3s;
         }
 
         input[type="password"], textarea, select, button, input[type="file"] {
@@ -120,7 +124,7 @@
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
         }
         
         input[type="password"]:focus, textarea:focus, select:focus {
@@ -163,6 +167,12 @@
             padding: 10px;
             font-size: 14px;
             flex-grow: 1;
+        }
+        #deletePresetBtn {
+            background-color: #dc3545; /* 삭제 버튼은 빨간색으로 */
+        }
+        #deletePresetBtn:hover {
+            background-color: #c82333;
         }
         
         /* 결과 이미지 */
@@ -244,21 +254,46 @@
             gap: 10px;
             margin-top: 10px;
         }
-
-        .thumbnail {
-            width: 80px; /* 썸네일 크기 */
+        .thumbnail-wrapper {
+            position: relative;
+            width: 80px;
             height: 80px;
-            object-fit: cover;
             border: 1px solid #ddd;
             border-radius: 8px;
+            overflow: hidden;
+        }
+        .thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             cursor: pointer;
             transition: transform 0.2s;
         }
-
         .thumbnail:hover {
             transform: scale(1.05);
         }
-        
+        .thumbnail-delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .thumbnail-delete:hover {
+            background-color: rgba(255, 0, 0, 0.7);
+        }
+
         /* 토글 스위치 스타일 */
         .toggle-switch-container {
             display: flex;
@@ -299,6 +334,60 @@
                 padding: 20px;
             }
         }
+
+        /* --- ▼ 다크 모드 스타일 ▼ --- */
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        body.dark-mode .container {
+            background-color: #1e1e1e;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+        body.dark-mode .title-group p,
+        body.dark-mode label,
+        body.dark-mode small {
+            color: #a0a0a0;
+        }
+        body.dark-mode input[type="password"],
+        body.dark-mode textarea,
+        body.dark-mode select {
+            background-color: #2c2c2c;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+        body.dark-mode input[type="password"]::placeholder,
+        body.dark-mode textarea::placeholder {
+            color: #777;
+        }
+        body.dark-mode .result-section {
+            border-color: #444;
+        }
+        body.dark-mode .model-info {
+            background-color: #2c2c2c;
+            border: 1px solid #444;
+        }
+        body.dark-mode .toggle-switch {
+            background-color: #555;
+        }
+        body.dark-mode .toggle-switch.checked {
+            background-color: #4a90e2;
+        }
+        body.dark-mode button#transformButton:not(:disabled) {
+            background-color: #4a90e2;
+        }
+        body.dark-mode button#transformButton:not(:disabled):hover {
+            background-color: #5aa1f2;
+        }
+        body.dark-mode #darkModeToggle {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            font-size: 14px;
+            align-self: flex-start;
+        }
+        /* --- ▲ 다크 모드 스타일 ▲ --- */
     </style>
 </head>
 <body>
@@ -309,6 +398,8 @@
             <h1>✨ AI 이미지 편집 도구</h1>
             <p><a href="https://svrforum.com/software/2668829" target="_blank" class="full-link">서버포럼 - 빨간물약</a></p>
         </div>
+
+        <button id="darkModeToggle" style="margin-bottom: 10px; padding: 10px; font-size: 14px;">🌙 다크 모드</button>
 
         <div class="input-group">
             <a href="https://aistudio.google.com/apikey" target="_blank" class="api-link">API 키 발급 및 현황 확인 (aistudio.google.com/apikey)</a>
@@ -380,6 +471,7 @@
 
 
 <script>
+    // --- 기본 요소 선택 ---
     const apiKeyInput = document.getElementById('apiKey');
     const imageUploadInput = document.getElementById('imageUpload');
     const imageUploadInput2 = document.getElementById('imageUpload2');
@@ -392,16 +484,42 @@
     const loader = document.getElementById('loader');
     const resultImage = document.getElementById('result-image');
     const downloadButton = document.getElementById('downloadButton');
-
     const thumbnailContainer1 = document.getElementById('thumbnailContainer1');
     const thumbnailContainer2 = document.getElementById('thumbnailContainer2');
-
-    // 모달 관련 요소
     const imageModal = document.getElementById('imageModal');
     const modalImg = document.getElementById('img01');
     const closeModal = document.getElementsByClassName('close')[0];
+    const darkModeToggle = document.getElementById('darkModeToggle'); // 다크 모드 버튼
 
-    // API 키 저장 및 로드
+    // --- 전역 변수 ---
+    let currentImageFile1 = null; 
+    let currentImageFile2 = null;
+
+    // --- ▼ 다크 모드 로직 ▼ ---
+    const setDarkMode = (isDark) => {
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️ 라이트 모드';
+            localStorage.setItem('darkMode', 'enabled');
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkModeToggle.textContent = '🌙 다크 모드';
+            localStorage.setItem('darkMode', 'disabled');
+        }
+    };
+    darkModeToggle.addEventListener('click', () => {
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        setDarkMode(!isDarkMode);
+    });
+    // 페이지 로드 시 다크 모드 설정 확인
+    document.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            setDarkMode(true);
+        }
+    });
+    // --- ▲ 다크 모드 로직 ▲ ---
+
+    // --- API 키 저장 및 로드 ---
     const apiKeyKey = 'geminiApiKey';
     if (localStorage.getItem(apiKeyKey)) {
         apiKeyInput.value = localStorage.getItem(apiKeyKey);
@@ -410,7 +528,7 @@
         localStorage.setItem(apiKeyKey, apiKeyInput.value);
     });
 
-    // 프리셋 관리
+    // --- 프리셋 관리 ---
     const presetsKey = 'geminiPresets';
     function loadPresets() {
         const storedPresets = localStorage.getItem(presetsKey);
@@ -458,7 +576,7 @@
         }
     });
     
-    // 다운로드 버튼 클릭 이벤트
+    // --- 다운로드 및 모달 기능 ---
     downloadButton.addEventListener('click', () => {
         const imageData = resultImage.src;
         if (imageData && imageData.startsWith('data:image')) {
@@ -472,62 +590,73 @@
             alert('다운로드할 이미지가 없습니다.');
         }
     });
-    
-    // 결과 이미지 클릭 시 모달 팝업으로 확대
     resultImage.addEventListener('click', () => {
         if (resultImage.src && resultImage.src.startsWith('data:image')) {
-            imageModal.style.display = 'flex'; // flex로 변경하여 중앙 정렬
+            imageModal.style.display = 'flex';
             modalImg.src = resultImage.src;
-        } else {
-            // alert('표시할 이미지가 없습니다. 먼저 이미지를 생성해 주세요.');
         }
     });
-
-    // 모달 닫기 버튼 클릭
     closeModal.addEventListener('click', () => {
         imageModal.style.display = 'none';
     });
-
-    // 모달 배경 클릭 시 닫기
     imageModal.addEventListener('click', (event) => {
         if (event.target === imageModal) {
             imageModal.style.display = 'none';
         }
     });
 
-    // 썸네일 생성 및 표시 함수
-    function displayThumbnail(file, container) {
-        container.innerHTML = ''; // 기존 썸네일 제거
+    // --- 이미지 썸네일 관리 ---
+    function displayThumbnail(file, container, inputElement, fileVarToUpdate) {
+        container.innerHTML = ''; 
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('thumbnail-wrapper');
+                
                 const img = document.createElement('img');
                 img.src = e.target.result;
                 img.classList.add('thumbnail');
                 img.alt = file.name;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'X';
+                deleteBtn.classList.add('thumbnail-delete');
+                deleteBtn.title = '이미지 제거';
+
+                deleteBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    inputElement.value = '';
+                    container.innerHTML = '';
+                    if (fileVarToUpdate) {
+                        window[fileVarToUpdate] = null; 
+                    }
+                });
+
                 img.addEventListener('click', () => {
                     imageModal.style.display = 'flex';
                     modalImg.src = e.target.result;
                 });
-                container.appendChild(img);
+                
+                wrapper.appendChild(img);
+                wrapper.appendChild(deleteBtn);
+                container.appendChild(wrapper);
             };
             reader.readAsDataURL(file);
         }
     }
-
-    // 이미지 업로드 1 변경 이벤트
     imageUploadInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
-        displayThumbnail(file, thumbnailContainer1);
+        currentImageFile1 = file;
+        displayThumbnail(file, thumbnailContainer1, imageUploadInput, 'currentImageFile1');
     });
-
-    // 이미지 업로드 2 변경 이벤트
     imageUploadInput2.addEventListener('change', (event) => {
         const file = event.target.files[0];
-        displayThumbnail(file, thumbnailContainer2);
+        currentImageFile2 = file;
+        displayThumbnail(file, thumbnailContainer2, imageUploadInput2, 'currentImageFile2');
     });
     
-    // --- 연속 편집 모드 로직 시작 ---
+    // --- 연속 편집 모드 로직 ---
     const continuousModeToggle = document.getElementById('continuousModeToggle');
     const continuousModeText = continuousModeToggle.querySelector('span');
     let continuousMode = false;
@@ -537,11 +666,9 @@
         continuousModeToggle.querySelector('.toggle-switch').classList.toggle('checked', continuousMode);
         continuousModeText.textContent = continuousMode ? 'ON' : 'OFF';
     });
-
-    // Data URL을 File 객체로 변환하는 함수
-    function dataURLtoFile(dataurl, filename) {
+    function dataURLtoFile(dataurl, filename, mimeType) {
         const arr = dataurl.split(',');
-        const mime = arr[0].match(/:(.*?);/)[1];
+        const mime = mimeType || arr[0].match(/:(.*?);/)[1];
         const bstr = atob(arr[1]);
         let n = bstr.length;
         const u8arr = new Uint8Array(n);
@@ -550,16 +677,12 @@
         }
         return new File([u8arr], filename, { type: mime });
     }
-    // --- 연속 편집 모드 로직 끝 ---
 
-    // 변환 버튼 클릭 이벤트 핸들러
+    // --- 메인 생성 버튼 클릭 이벤트 핸들러 ---
     transformButton.addEventListener('click', async () => {
         const apiKey = apiKeyInput.value.trim();
         const prompt = promptTextInput.value.trim();
-        const imageFile1 = imageUploadInput.files[0];
-        const imageFile2 = imageUploadInput2.files[0];
-
-        // 유효성 검사
+        
         if (!apiKey) {
             alert('API 키를 입력해주세요.');
             return;
@@ -569,7 +692,6 @@
             return;
         }
 
-        // UI 상태 변경
         transformButton.disabled = true;
         statusText.style.display = 'none';
         resultImage.style.display = 'none';
@@ -578,45 +700,24 @@
 
         const parts = [{ text: prompt }];
 
-        if (imageFile1) {
-            const base64Image = await convertFileToBase64(imageFile1);
-            parts.push({
-                inlineData: {
-                    mimeType: imageFile1.type,
-                    data: base64Image
-                }
-            });
+        if (currentImageFile1) { 
+            const base64Image = await convertFileToBase64(currentImageFile1);
+            parts.push({ inlineData: { mimeType: currentImageFile1.type, data: base64Image } });
         }
 
-        if (imageFile2) {
-            const base64Image = await convertFileToBase64(imageFile2);
-            parts.push({
-                inlineData: {
-                    mimeType: imageFile2.type,
-                    data: base64Image
-                }
-            });
+        if (currentImageFile2) { 
+            const base64Image = await convertFileToBase64(currentImageFile2);
+            parts.push({ inlineData: { mimeType: currentImageFile2.type, data: base64Image } });
         }
         
-        // 아무 이미지도 업로드되지 않았을 경우 더미 이미지 추가
-        if (parts.length === 1) {
+        if (!currentImageFile1 && !currentImageFile2) {
             const dummyCanvas = document.createElement('canvas');
-            dummyCanvas.width = 1;
-            dummyCanvas.height = 1;
+            dummyCanvas.width = 1; dummyCanvas.height = 1;
             const ctx = dummyCanvas.getContext('2d');
-            ctx.fillStyle = 'rgba(255, 255, 255, 0)';
-            ctx.fillRect(0, 0, 1, 1);
-            const dataUrl = dummyCanvas.toDataURL('image/png');
-            const blob = await (await fetch(dataUrl)).blob();
-            const dummyFile = new File([blob], 'dummy_image.png', { type: 'image/png' });
-
+            ctx.fillStyle = 'rgba(255, 255, 255, 0)'; ctx.fillRect(0, 0, 1, 1);
+            const dummyFile = dataURLtoFile(dummyCanvas.toDataURL('image/png'), 'dummy.png', 'image/png');
             const dummyBase64 = await convertFileToBase64(dummyFile);
-            parts.push({
-                inlineData: {
-                    mimeType: dummyFile.type,
-                    data: dummyBase64
-                }
-            });
+            parts.push({ inlineData: { mimeType: dummyFile.type, data: dummyBase64 } });
         }
         
         try {
@@ -628,26 +729,17 @@
             statusText.style.display = 'block';
             downloadButton.style.display = 'block';
 
-            // --- 연속 편집 모드 로직 실행 ---
             if (continuousMode) {
-                const newFile = dataURLtoFile(result, `edited_image_${new Date().getTime()}.png`);
-                
-                // 새로운 File 객체를 DataTransfer 객체에 담아 input.files에 할당
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(newFile);
-                imageUploadInput.files = dataTransfer.files;
-
-                // 썸네일 업데이트
-                displayThumbnail(newFile, thumbnailContainer1);
+                const resultMimeTypeMatch = result.match(/data:(.*?);base64/);
+                const resultMimeType = resultMimeTypeMatch ? resultMimeTypeMatch[1] : 'image/png';
+                const newFile = dataURLtoFile(result, `edited_image_${new Date().getTime()}.png`, resultMimeType);
+                currentImageFile1 = newFile;
+                displayThumbnail(newFile, thumbnailContainer1, imageUploadInput, 'currentImageFile1');
             }
             
         } catch (error) {
             console.error('API Error:', error);
-            let errorMessage = error.message;
-            if (errorMessage.includes('API 응답에서 변환된 이미지를 찾을 수 없습니다.')) {
-                errorMessage = "API 응답에서 이미지를 찾을 수 없습니다. 프롬프트를 변경하여 다시 시도해 보세요.";
-            }
-            statusText.textContent = `오류 발생: ${errorMessage}`;
+            statusText.textContent = `오류 발생: ${error.message}`;
             statusText.style.display = 'block';
         } finally {
             transformButton.disabled = false;
@@ -655,6 +747,7 @@
         }
     });
 
+    // --- 유틸리티 함수 ---
     function convertFileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -681,11 +774,18 @@
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error.message || 'API 호출에 실패했습니다.');
+            throw new Error(errorData.error.message || `API 호출에 실패했습니다. (HTTP ${response.status})`);
         }
 
         const responseData = await response.json();
         
+        if (!responseData.candidates || responseData.candidates.length === 0) {
+            if (responseData.promptFeedback && responseData.promptFeedback.blockReason) {
+                throw new Error(`이미지 생성이 차단되었습니다. 이유: ${responseData.promptFeedback.blockReason}`);
+            }
+            throw new Error('API 응답에 생성된 이미지(candidates)가 없습니다. 프롬프트를 변경해보세요.');
+        }
+
         const imageContent = responseData.candidates[0].content.parts.find(part => part.inlineData && part.inlineData.mimeType.startsWith('image'));
         
         if (imageContent) {
