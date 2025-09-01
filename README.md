@@ -1,6 +1,8 @@
 # Gemini-AI-Image-Edit-Tool
 제미나이 2.5 Flash 프리뷰 이미지 생성 모델을 이용한 이미지 편집 도구입니다
 
+[AI 이미지 편집 도구](https://sruinz.github.io/Gemini-AI-Image-Edit-Tool/Gemini-AI-Image-Edit-Tool.html)
+
 <img width="1143" height="1339" alt="image" src="https://github.com/user-attachments/assets/4b76fbfc-0d6a-467b-bcfc-dd52de743e17" />
 <img width="1143" height="1339" alt="image" src="https://github.com/user-attachments/assets/300e5856-6fbb-442b-b939-d10baaf76845" />
 <img width="1143" height="1431" alt="image" src="https://github.com/user-attachments/assets/0c679b61-c6db-45c2-8fe3-d74968d6711f" />
